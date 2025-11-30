@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sigma - Умный чат с ИИ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #6c63ff;
+            --primary-dark: #564fd8;
+            --secondary: #ff6584;
+            --dark: #1a1a2e;
+            --darker: #0f0f1a;
+            --light: #f5f5f7;
+            --gray: #8a8a9c;
+            --success: #2ecc71;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-header {
+            background: rgba(26, 26, 46, 0.8);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: 18px;
+            border-bottom-left-radius: 5px;
+            display: none;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--gray);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: var(--light);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.2);
+        }
+
+        .send-button {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(108, 99, 255, 0.4);
+        }
+
+        .send-button:active {
+            transform: scale(0.98);
+        }
+
+        .features {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 15px;
+            flex-wrap: wrap;
+        }
+
+        .feature-button {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            color: var(--light);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .feature-button:hover {
+            background: rgba(108, 99, 255, 0.2);
+            border-color: var(--primary);
+        }
+
+        /* Стили для скроллбара */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 95vh;
+                border-radius: 15px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .chat-header {
+                padding: 15px;
+            }
+            
+            .logo-text {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+            
+            .features {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="logo">
+                <div class="logo-icon">Σ</div>
+                <div class="logo-text">Sigma</div>
+            </div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span>ИИ онлайн</span>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="messages">
+            <div class="message bot-message">
+                <div>Привет! Я Sigma — твой умный помощник с искусственным интеллектом. Готов ответить на любые твои вопросы, помочь с задачами или просто поболтать. Что у тебя на уме?</div>
+                <div class="message-time" id="current-time">только что</div>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typing">
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature-button" onclick="suggestQuestion('Расскажи о возможностях ИИ')">Возможности ИИ</div>
+            <div class="feature-button" onclick="suggestQuestion('Напиши код для кнопки на CSS')">Помощь с кодом</div>
+            <div class="feature-button" onclick="suggestQuestion('Объясни квантовую физику')">Объясни сложное</div>
+            <div class="feature-button" onclick="suggestQuestion('Придумай креативную идею')">Креативные идеи</div>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="userInput" placeholder="Введите сообщение...">
+            <button class="send-button" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация элементов DOM
+        const messagesContainer = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        const typingIndicator = document.getElementById('typing');
+        
+        // Флаг для отслеживания состояния набора
+        let isTyping = false;
+        
+        // Фокус на поле ввода при загрузке
+        window.onload = function() {
+            userInput.focus();
+            
+            // Обновляем время первого сообщения
+            document.getElementById('current-time').textContent = getCurrentTime();
+        };
+
+        // Отправка сообщения по Enter
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Основная функция отправки сообщения
+        function sendMessage() {
+            const message = userInput.value.trim();
+            
+            // Проверяем, не пустое ли сообщение и не печатает ли уже бот
+            if (message === '' || isTyping) {
+                return;
+            }
+
+            // Добавляем сообщение пользователя
+            addMessage(message, 'user');
+            userInput.value = '';
+
+            // Показываем индикатор набора
+            showTyping();
+            isTyping = true;
+
+            // Имитируем ответ бота с задержкой
+            setTimeout(() => {
+                hideTyping();
+                const botResponse = generateResponse(message);
+                addMessage(botResponse, 'bot');
+                isTyping = false;
+            }, 1000 + Math.random() * 1000);
+        }
+
+        // Функция добавления сообщения в чат
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const messageContent = document.createElement('div');
+            messageContent.textContent = text;
+            messageDiv.appendChild(messageContent);
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = getCurrentTime();
+            messageDiv.appendChild(timeDiv);
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Показать индикатор набора
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+            scrollToBottom();
+        }
+
+        // Скрыть индикатор набора
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
+        // Прокрутка чата вниз
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Получить текущее время
+        function getCurrentTime() {
+            const now = new Date();
+            return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // Подставить вопрос в поле ввода
+        function suggestQuestion(question) {
+            userInput.value = question;
+            userInput.focus();
+        }
+
+        // Генерация ответа бота
+        function generateResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+            
+            // Приветствия
+            if (lowerMessage.includes('привет') || lowerMessage.includes('здравств') || lowerMessage.includes('добрый') || lowerMessage.includes('хай') || lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+                const greetings = [
+                    "Привет! Рад видеть тебя в чате Sigma! Как дела?",
+                    "Здравствуй! Очень приятно с тобой пообщаться. Что нового?",
+                    "Приветствую! Готов помочь с любыми вопросами. О чём хочешь поговорить?",
+                    "Привет! Отличный день для продуктивного общения, не правда ли?",
+                    "Здорово! Ты заглянул как раз вовремя. Чем займёмся сегодня?"
+                ];
+                return greetings[Math.floor(Math.random() * greetings.length)];
+            }
+            
+            // Как дела
+            if (lowerMessage.includes('как дел') || lowerMessage.includes('как ты') || lowerMessage.includes('как жизнь') || lowerMessage.includes('how are you')) {
+                const howAreYou = [
+                    "У меня всё отлично! Готов к работе и новым вызовам. А у тебя как настроение?",
+                    "Прекрасно, спасибо! Как цифровой помощник, я всегда в хорошей форме. Расскажи, как твои дела?",
+                    "Всё замечательно! Особенно когда есть возможность помочь таким интересным людям, как ты.",
+                    "Лучше не бывает! Готов к новым интересным беседам. А ты как?",
+                    "Отлично! Тем более что мы с тобой общаемся. Как твой день проходит?"
+                ];
+                return howAreYou[Math.floor(Math.random() * howAreYou.length)];
+            }
+            
+            // Вопросы о ИИ
+            if (lowerMessage.includes('ии') || lowerMessage.includes('искусственный интеллект') || lowerMessage.includes('ai') || lowerMessage.includes('нейросеть') || lowerMessage.includes('алгоритм')) {
+                const aiResponses = [
+                    "Искусственный интеллект — это удивительная технология, которая постоянно развивается. Sigma использует передовые алгоритмы для понимания и генерации текста.",
+                    "ИИ открывает невероятные возможности! От автоматизации рутины до творческих задач — спектр применения огромен.",
+                    "За последние годы ИИ совершил настоящий прорыв. Современные модели, подобные мне, могут понимать контекст и поддерживать осмысленные диалоги.",
+                    "ИИ — это не просто программы, а системы, способные обучаться и адаптироваться. Sigma постоянно совершенствуется в процессе общения.",
+                    "Прелесть ИИ в его многозадачности. Я могу помочь с анализом, генерацией идей, объяснением сложных тем и многим другим!"
+                ];
+                return aiResponses[Math.floor(Math.random() * aiResponses.length)];
+            }
+            
+            // Вопросы о Sigma
+            if (lowerMessage.includes('сигма') || lowerMessage.includes('sigma') || lowerMessage.includes('твои возможност') || lowerMessage.includes('что ты умеешь')) {
+                const sigmaResponses = [
+                    "Sigma — это умный помощник, созданный для решения разнообразных задач. Я могу помогать с кодом, объяснять сложные концепции, генерировать идеи и просто поддерживать беседу!",
+                    "Мои возможности довольно широки: от ответов на вопросы и помощи в обучении до творческих задач вроде написания текстов или генерации идей.",
+                    "Как Sigma, я специализируюсь на понимании естественного языка. Можем обсудить науку, технологии, искусство или просто поболтать на любые темы!",
+                    "Я умею анализировать запросы, поддерживать контекст беседы, помогать с программированием, объяснять сложные темы простыми словами и многое другое.",
+                    "Sigma создан, чтобы быть универсальным помощником. Что тебя особенно интересует — технические вопросы, творческие задачи или что-то другое?"
+                ];
+                return sigmaResponses[Math.floor(Math.random() * sigmaResponses.length)];
+            }
+            
+            // Программирование
+            if (lowerMessage.includes('код') || lowerMessage.includes('программир') || lowerMessage.includes('html') || lowerMessage.includes('css') || lowerMessage.includes('javascript') || lowerMessage.includes('python') || lowerMessage.includes('алгоритм')) {
+                const codeResponses = [
+                    "Программирование — это увлекательно! Какой язык или технологию тебя интересует? Могу помочь с примером кода или объяснением концепций.",
+                    "Отличная тема! Напиши, с каким именно вопросом по программированию ты столкнулся, и я постараюсь помочь.",
+                    "Программирование открывает безграничные возможности для творчества. Что тебя интересует — веб-разработка, мобильные приложения или что-то другое?",
+                    "Я с удовольствием помогу с кодом! Уточни, что именно тебе нужно — пример, объяснение ошибки или совет по архитектуре.",
+                    "Программирование — это искусство и наука одновременно. Расскажи подробнее о своей задаче, и я предложу решение."
+                ];
+                return codeResponses[Math.floor(Math.random() * codeResponses.length)];
+            }
+            
+            // Наука
+            if (lowerMessage.includes('наук') || lowerMessage.includes('физик') || lowerMessage.includes('хими') || lowerMessage.includes('биолог') || lowerMessage.includes('математ') || lowerMessage.includes('квант') || lowerMessage.includes('космос')) {
+                const scienceResponses = [
+                    "Наука — это потрясающе! Какая область тебя интересует? С удовольствием поделюсь знаниями или помогу разобраться в сложной теме.",
+                    "Научные открытия постоянно меняют наш мир. Что тебе особенно интересно — фундаментальные исследования или практические применения?",
+                    "Обожаю научные темы! Они полны удивительных открытий и парадоксов. О чём конкретно хочешь поговорить?",
+                    "Наука помогает нам понимать вселенную. Расскажи, какая тема тебя волнует, и я постараюсь объяснить её доступным языком.",
+                    "От физики элементарных частиц до нейробиологии — мир науки невероятно разнообразен. Что исследуем сегодня?"
+                ];
+                return scienceResponses[Math.floor(Math.random() * scienceResponses.length)];
